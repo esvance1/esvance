@@ -123,60 +123,94 @@
                 </div>
                 <svg class="w-5 h-5 text-white/50 relative z-10 group-hover:translate-x-2 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
             </a>
+
         </div>
     </div>
 
-    <div id="gacha" class="max-w-6xl mx-auto px-4 mt-20 mb-20">
 
-        <div class="flex flex-col items-center justify-center mb-10 text-center">
+    @php
+        $hotProducts = $products->filter(function($item) {
+            return (!isset($item->is_visible) || $item->is_visible == 1) && $item->is_hot == 1;
+        });
+    @endphp
+
+    @if($hotProducts->count() > 0)
+    <div class="max-w-6xl mx-auto px-4 mt-20 mb-10">
+        <div class="flex flex-col items-center justify-center mb-8 text-center">
+            <div class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-black tracking-widest uppercase mb-3 flex items-center gap-1.5 border border-red-200">
+                <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>
+                Recommend
+            </div>
             <h2 class="text-3xl md:text-4xl font-display font-black text-esv-dark uppercase italic tracking-wide">
-                Special Packs <span class="text-esv-accent">GACHA</span>
+                HOT <span class="text-red-500">ITEMS</span>
             </h2>
-            <div class="w-16 h-1.5 bg-esv-primary mt-2 skew-x-[-20deg]"></div>
-            <p class="text-slate-500 mt-3 font-medium text-sm">ตู้สุ่มกาชาปอง ลุ้นรับไอดีแรร์ระดับ Epic & Big Time</p>
+            <div class="w-16 h-1.5 bg-red-500 mt-2 skew-x-[-20deg]"></div>
+            <p class="text-slate-500 mt-3 font-medium text-sm">สินค้าขายดี แอดมินแนะนำ คุ้มค่าที่สุด!</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            @forelse($boxes as $box)
-            <div class="bg-white rounded-3xl p-6 text-center relative overflow-hidden shadow-[0_10px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_15px_30px_rgba(107,33,168,0.15)] hover:-translate-y-2 transition-all border-2 {{ $box->is_vip ? 'border-esv-accent' : 'border-esv-primary/20' }} group">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            @foreach($hotProducts as $product)
+            <div class="bg-white rounded-2xl border overflow-hidden shadow-sm transition-all group flex flex-col h-full relative {{ $product->stock <= 0 ? 'border-slate-200 opacity-80 grayscale-[20%]' : 'border-red-200 hover:shadow-[0_15px_30px_rgba(239,68,68,0.15)] hover:-translate-y-1 hover:border-red-400' }}">
+                <a href="{{ route('product.show', $product->id) }}" class="block h-40 bg-slate-100 flex items-center justify-center relative overflow-hidden">
+                    @if(filter_var($product->icon, FILTER_VALIDATE_URL))
+                        <img src="{{ $product->icon }}" class="w-full h-full object-cover {{ $product->stock > 0 ? 'group-hover:scale-110 transition-transform duration-500' : '' }}">
+                    @else
+                        <div class="w-full h-full flex items-center justify-center bg-slate-200 text-slate-400 {{ $product->stock > 0 ? 'group-hover:scale-110 transition-transform duration-500' : '' }}">
+                            <svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        </div>
+                    @endif
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent"></div>
 
-                @if($box->is_vip)
-                    <div class="absolute top-4 right-4 bg-gradient-to-r from-esv-accent to-fuchsia-500 text-white text-[10px] font-black px-4 py-1.5 skew-x-[-15deg] shadow-md tracking-widest z-10">
-                        <span class="block skew-x-[15deg]">VIP S-CLASS</span>
-                    </div>
-                @endif
-
-                <div class="mb-6 flex justify-center">
-                    <div class="relative">
-                        @if(filter_var($box->icon, FILTER_VALIDATE_URL))
-                            <img src="{{ $box->icon }}" class="w-32 h-32 object-cover rounded-2xl border-[3px] {{ $box->is_vip ? 'border-esv-accent shadow-[0_10px_20px_rgba(217,70,239,0.3)]' : 'border-esv-primary shadow-[0_10px_20px_rgba(107,33,168,0.2)]' }} group-hover:scale-105 transition-transform duration-300">
-                        @else
-                            <div class="w-32 h-32 flex items-center justify-center bg-slate-50 rounded-2xl border-[3px] {{ $box->is_vip ? 'border-esv-accent text-esv-accent' : 'border-esv-primary text-esv-primary' }} group-hover:scale-105 transition-transform duration-300 shadow-inner">
-                                <svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                    @if($product->stock <= 0)
+                        <div class="absolute inset-0 bg-black/40 z-10 flex items-center justify-center backdrop-blur-[2px]">
+                            <div class="bg-rose-600 text-white text-sm md:text-base font-black px-6 py-2 skew-x-[-15deg] tracking-widest shadow-xl border-2 border-white">
+                                <span class="block skew-x-[15deg] uppercase">Sold Out</span>
                             </div>
+                        </div>
+                    @endif
+
+                    @if($product->is_hot && $product->stock > 0)
+                        <div class="absolute top-3 left-3 bg-red-500 text-white text-[9px] font-black px-3 py-1 skew-x-[-15deg] tracking-widest shadow-md z-20">
+                            <span class="block skew-x-[15deg]">HOT</span>
+                        </div>
+                    @endif
+
+                    <div class="absolute bottom-3 right-3 bg-white/95 backdrop-blur-sm text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 shadow-sm z-20 {{ $product->stock > 0 ? 'text-green-600 border border-green-200' : 'text-rose-600 border border-rose-200' }}">
+                        @if($product->stock > 0)
+                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            เหลือ {{ $product->stock }}
+                        @else
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            หมดสต๊อก
                         @endif
                     </div>
-                </div>
-
-                <h3 class="text-2xl font-display font-black mb-2 tracking-wide uppercase italic text-esv-dark">{{ $box->name }}</h3>
-
-                <div class="text-[11px] text-slate-500 mb-6 bg-slate-50 py-2.5 rounded-xl border border-slate-100 flex items-center justify-center gap-1.5 font-bold">
-                    <svg class="w-4 h-4 {{ $box->is_vip ? 'text-esv-accent' : 'text-esv-primary' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                    การันตี Pity: สุ่มครบ {{ $box->pity_limit }} ครั้ง ออกของแรร์ชัวร์
-                </div>
-
-                <a href="{{ route('gacha.play', $box->id) }}" class="inline-flex justify-center items-center w-full py-4 font-black transition-all text-sm uppercase tracking-wider skew-x-[-10deg] shadow-md {{ $box->is_vip ? 'bg-esv-accent hover:bg-fuchsia-500 text-white' : 'bg-esv-primary hover:bg-purple-800 text-white' }}">
-                    <span class="skew-x-[10deg]">เริ่มสุ่ม (฿{{ number_format($box->price) }})</span>
                 </a>
 
+                <div class="p-4 md:p-5 flex flex-col flex-1 border-t-[3px] {{ $product->stock > 0 ? 'border-red-500 group-hover:border-red-600' : 'border-slate-200' }} transition-colors">
+                    <a href="{{ route('product.show', $product->id) }}" class="block {{ $product->stock > 0 ? 'hover:text-red-500 transition-colors' : 'pointer-events-none' }}">
+                        <h4 class="font-display font-black text-slate-800 text-sm md:text-base mb-1 uppercase tracking-wide line-clamp-2 leading-tight transition-colors">{{ $product->name }}</h4>
+                    </a>
+                    <div class="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <span class="font-display font-black text-lg italic {{ $product->stock > 0 ? 'text-red-500' : 'text-slate-400' }}">฿{{ number_format($product->price, 0) }}</span>
+                        <form action="{{ route('buy.product', $product->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" onclick="return confirm('ยืนยันสั่งซื้อ [{{ $product->name }}] ใช่หรือไม่?')"
+                                class="px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-md transition-colors {{ $product->stock > 0 ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none border border-slate-300' }}"
+                                {{ $product->stock <= 0 ? 'disabled' : '' }}>
+                                @if($product->stock > 0)
+                                    เลือกซื้อเลย
+                                @else
+                                    Sold Out
+                                @endif
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
-            @empty
-            <div class="col-span-3 text-center py-16 bg-white rounded-3xl border-2 border-dashed border-slate-300">
-                <p class="text-slate-400 font-bold text-lg">แอดมินยังไม่ได้ตั้งค่าตู้สุ่มครับ</p>
-            </div>
-            @endforelse
+            @endforeach
         </div>
     </div>
+    @endif
 
     <div id="category-section" class="max-w-6xl mx-auto px-4 mt-20 pb-20 scroll-mt-[100px]">
 
@@ -301,6 +335,59 @@
             </div>
             @endforelse
         </div>
+    </div>
+
+
+    <div id="gacha" class="max-w-6xl mx-auto px-4 mt-10 mb-20">
+        <div class="flex flex-col items-center justify-center mb-10 text-center">
+            <h2 class="text-3xl md:text-4xl font-display font-black text-esv-dark uppercase italic tracking-wide">
+                Special Packs <span class="text-esv-accent">GACHA</span>
+            </h2>
+            <div class="w-16 h-1.5 bg-esv-primary mt-2 skew-x-[-20deg]"></div>
+            <p class="text-slate-500 mt-3 font-medium text-sm">ตู้สุ่มกาชาปอง ลุ้นรับไอดีแรร์ระดับ Epic & Big Time</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            @forelse($boxes as $box)
+            <div class="bg-white rounded-3xl p-6 text-center relative overflow-hidden shadow-[0_10px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_15px_30px_rgba(107,33,168,0.15)] hover:-translate-y-2 transition-all border-2 {{ $box->is_vip ? 'border-esv-accent' : 'border-esv-primary/20' }} group">
+
+                @if($box->is_vip)
+                    <div class="absolute top-4 right-4 bg-gradient-to-r from-esv-accent to-fuchsia-500 text-white text-[10px] font-black px-4 py-1.5 skew-x-[-15deg] shadow-md tracking-widest z-10">
+                        <span class="block skew-x-[15deg]">VIP S-CLASS</span>
+                    </div>
+                @endif
+
+                <div class="mb-6 flex justify-center">
+                    <div class="relative">
+                        @if(filter_var($box->icon, FILTER_VALIDATE_URL))
+                            <img src="{{ $box->icon }}" class="w-32 h-32 object-cover rounded-2xl border-[3px] {{ $box->is_vip ? 'border-esv-accent shadow-[0_10px_20px_rgba(217,70,239,0.3)]' : 'border-esv-primary shadow-[0_10px_20px_rgba(107,33,168,0.2)]' }} group-hover:scale-105 transition-transform duration-300">
+                        @else
+                            <div class="w-32 h-32 flex items-center justify-center bg-slate-50 rounded-2xl border-[3px] {{ $box->is_vip ? 'border-esv-accent text-esv-accent' : 'border-esv-primary text-esv-primary' }} group-hover:scale-105 transition-transform duration-300 shadow-inner">
+                                <svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <h3 class="text-2xl font-display font-black mb-2 tracking-wide uppercase italic text-esv-dark">{{ $box->name }}</h3>
+
+                <div class="text-[11px] text-slate-500 mb-6 bg-slate-50 py-2.5 rounded-xl border border-slate-100 flex items-center justify-center gap-1.5 font-bold">
+                    <svg class="w-4 h-4 {{ $box->is_vip ? 'text-esv-accent' : 'text-esv-primary' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    การันตี Pity: สุ่มครบ {{ $box->pity_limit }} ครั้ง ออกของแรร์ชัวร์
+                </div>
+
+                <a href="{{ route('gacha.play', $box->id) }}" class="inline-flex justify-center items-center w-full py-4 font-black transition-all text-sm uppercase tracking-wider skew-x-[-10deg] shadow-md {{ $box->is_vip ? 'bg-esv-accent hover:bg-fuchsia-500 text-white' : 'bg-esv-primary hover:bg-purple-800 text-white' }}">
+                    <span class="skew-x-[10deg]">เริ่มสุ่ม (฿{{ number_format($box->price) }})</span>
+                </a>
+
+            </div>
+            @empty
+            <div class="col-span-3 text-center py-16 bg-white rounded-3xl border-2 border-dashed border-slate-300">
+                <p class="text-slate-400 font-bold text-lg">แอดมินยังไม่ได้ตั้งค่าตู้สุ่มครับ</p>
+            </div>
+            @endforelse
+        </div>
+    </div>
 
 @endsection
 

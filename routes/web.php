@@ -39,7 +39,7 @@ Route::get('/', function (Illuminate\Http\Request $request) {
     // 🚨 [เพิ่มใหม่] คำนวณสถิติจริงจากฐานข้อมูล
     $stats = [
         'users_count' => App\Models\User::count(),
-        'total_stock' => App\Models\Account::where('status', 'available')->count(),
+        'total_stock' => App\Models\Product::sum('stock'),
         'total_sold' => App\Models\Order::count() // จำนวนบิลที่ซื้อ/สุ่มสำเร็จ
     ];
 
@@ -488,8 +488,31 @@ Route::middleware('auth')->group(function () {
 
         Route::delete('/products/{id}', function ($id) {
             if (!Auth::user()->is_admin) return redirect('/');
-            Product::findOrFail($id)->delete();
-            return back()->with('success', 'ลบสินค้าออกจากระบบแล้วครับ!');
+
+            $product = App\Models\Product::findOrFail($id);
+
+            // 1. ไปเคลียร์ข้อมูลในตู้สุ่ม (Gacha) ก่อน
+            $randomItems = App\Models\RandomItem::where('product_id', $product->id)->get();
+            foreach ($randomItems as $item) {
+                try {
+                    \Illuminate\Support\Facades\DB::table('drop_stats')->where('random_item_id', $item->id)->delete();
+                } catch (\Exception $e) {}
+
+                try {
+                    \Illuminate\Support\Facades\DB::table('rate_history')->where('random_item_id', $item->id)->delete();
+                } catch (\Exception $e) {}
+
+                $item->delete();
+            }
+
+            // 2. เคลียร์สต๊อกไอดี (Accounts) ที่เชื่อมกับสินค้านี้ทิ้ง
+            App\Models\Account::where('product_id', $product->id)->delete();
+
+            // 3. สุดท้าย ลบตัวสินค้าหลักได้อย่างปลอดภัย
+            $product->delete();
+
+            // 🚨 แก้ไขตรงนี้: บังคับให้ Redirect กลับไปที่หน้า admin/products ชัวร์ๆ
+            return redirect()->route('admin.products')->with('success', 'ลบสินค้าและข้อมูลที่เกี่ยวข้องออกจากระบบเรียบร้อยครับ!');
         })->name('products.destroy');
 
         Route::get('/products/{id}/edit', function ($id) {
@@ -650,8 +673,22 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/codes', function (Illuminate\Http\Request $request) {
             if (!Auth::user()->is_admin) return redirect('/');
+
+            // 🚨 เพิ่มระบบดักจับ (Validate) โค้ดซ้ำตรงนี้!
+            $request->validate([
+                'code' => 'nullable|string|unique:redeem_codes,code'
+            ], [
+                'code.unique' => '❌ โค้ดนี้มีอยู่ในระบบแล้วครับ กรุณาตั้งชื่ออื่น!'
+            ]);
+
             $codeStr = $request->code ? strtoupper($request->code) : strtoupper(\Illuminate\Support\Str::random(12));
-            App\Models\RedeemCode::create(['code' => $codeStr, 'reward_amount' => $request->reward_amount, 'max_uses' => $request->max_uses ?? 1]);
+
+            App\Models\RedeemCode::create([
+                'code' => $codeStr,
+                'reward_amount' => $request->reward_amount,
+                'max_uses' => $request->max_uses ?? 1
+            ]);
+
             return back()->with('success', "สร้างโค้ด {$codeStr} สำเร็จ!");
         })->name('codes.store');
 

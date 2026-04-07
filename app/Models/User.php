@@ -20,8 +20,12 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username', // 🚨 เพิ่มบรรทัดนี้เข้ามา
         'email',
         'password',
+        'balance',
+        'points',
+        'is_admin'
     ];
 
     /**
